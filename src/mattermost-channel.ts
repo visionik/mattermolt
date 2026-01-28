@@ -6,6 +6,7 @@ import { Logger } from './logger.js';
 import type { MattermostConfig } from './config.js';
 import { ConnectionState } from './types.js';
 import { ConnectionManager } from './connection-manager.js';
+import { MessageHandler } from './message-handler.js';
 import type { Channel, ChannelEventHandlers, SendMessageOptions } from './types.js';
 
 /**
@@ -19,6 +20,7 @@ export class MattermostChannel implements Channel {
   private eventHandlers: ChannelEventHandlers;
   private connectionState: ConnectionState;
   private connectionManager: ConnectionManager | null = null;
+  private messageHandler: MessageHandler | null = null;
 
   constructor(config: MattermostConfig, eventHandlers: ChannelEventHandlers = {}) {
     this.eventHandlers = eventHandlers;
@@ -31,10 +33,13 @@ export class MattermostChannel implements Channel {
     // Initialize connection manager
     this.connectionManager = new ConnectionManager(config, {
       stateChange: (state) => this.setConnectionState(state),
-      message: (data) => this.handleWebSocketMessage(data),
+      message: (data) => void this.handleWebSocketMessage(data),
       error: (error) => this.handleError(error),
-      ready: () => this.handleConnectionReady(),
+      ready: () => void this.handleConnectionReady(),
     });
+
+    // Initialize message handler
+    this.messageHandler = new MessageHandler(this.connectionManager.apiClient);
   }
 
   /**
@@ -107,23 +112,23 @@ export class MattermostChannel implements Channel {
    * Send a message through the channel
    * @param options Message send options
    */
-  send(options: SendMessageOptions): Promise<void> {
-    if (!this.connected) {
-      return Promise.reject(new Error('Cannot send message: channel not connected'));
+  async send(options: SendMessageOptions): Promise<void> {
+    if (!this.connected || !this.messageHandler) {
+      throw new Error('Cannot send message: channel not connected');
     }
 
     this.logger.debug({ sessionId: options.sessionId }, 'Sending message');
 
     try {
-      // TODO: Transform message to MatterMost format
-      // TODO: Send via MatterMost API
-      // TODO: Handle response
+      await this.messageHandler.sendMessage(options.sessionId, options.content, {
+        replyTo: options.replyTo,
+        threadId: options.threadId,
+      });
 
       this.logger.debug({ sessionId: options.sessionId }, 'Message sent successfully');
-      return Promise.resolve();
     } catch (error) {
       this.logger.error({ err: error, sessionId: options.sessionId }, 'Failed to send message');
-      return Promise.reject(error);
+      throw error;
     }
   }
 
@@ -151,18 +156,42 @@ export class MattermostChannel implements Channel {
   /**
    * Handle WebSocket message
    */
-  private handleWebSocketMessage(_data: unknown): void {
-    this.logger.debug('Received WebSocket message');
-    // TODO: Transform MatterMost message to MoltBot format
-    // TODO: Call message handler in Phase 2
+  private async handleWebSocketMessage(data: unknown): Promise<void> {
+    if (!this.messageHandler) {
+      return;
+    }
+
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+      const messageEvent = await this.messageHandler.transformInboundMessage(data as any);
+
+      if (messageEvent && this.eventHandlers.onMessage) {
+        await this.eventHandlers.onMessage(messageEvent);
+      }
+    } catch (error) {
+      this.logger.error({ err: error }, 'Error handling WebSocket message');
+      if (this.eventHandlers.onError) {
+        this.eventHandlers.onError(error as Error);
+      }
+    }
   }
 
   /**
    * Handle connection ready
    */
-  private handleConnectionReady(): void {
+  private async handleConnectionReady(): Promise<void> {
     this.logger.info('Connection ready');
-    // TODO: Subscribe to events in Phase 2
+
+    // Set bot user ID in message handler
+    if (this.connectionManager && this.messageHandler) {
+      try {
+        const me = await this.connectionManager.apiClient.getMe();
+        this.messageHandler.setBotUserId(me.id);
+        this.logger.debug({ botUserId: me.id }, 'Bot user ID configured');
+      } catch (error) {
+        this.logger.error({ err: error }, 'Failed to get bot user ID');
+      }
+    }
   }
 
   /**
