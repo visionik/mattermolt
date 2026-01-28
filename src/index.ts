@@ -4,6 +4,7 @@
  */
 
 export { MattermostChannel } from './mattermost-channel.js';
+export { ConnectionManager } from './connection-manager.js';
 export { validateConfig, ConfigValidationError, DEFAULT_CONFIG } from './config.js';
 export { Logger, createLogger } from './logger.js';
 export type {

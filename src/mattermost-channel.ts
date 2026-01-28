@@ -5,6 +5,7 @@
 import { Logger } from './logger.js';
 import type { MattermostConfig } from './config.js';
 import { ConnectionState } from './types.js';
+import { ConnectionManager } from './connection-manager.js';
 import type { Channel, ChannelEventHandlers, SendMessageOptions } from './types.js';
 
 /**
@@ -17,6 +18,7 @@ export class MattermostChannel implements Channel {
   private logger: Logger;
   private eventHandlers: ChannelEventHandlers;
   private connectionState: ConnectionState;
+  private connectionManager: ConnectionManager | null = null;
 
   constructor(config: MattermostConfig, eventHandlers: ChannelEventHandlers = {}) {
     this.eventHandlers = eventHandlers;
@@ -24,6 +26,14 @@ export class MattermostChannel implements Channel {
     this.logger = new Logger({
       level: config.logLevel,
       component: 'mattermost-channel',
+    });
+
+    // Initialize connection manager
+    this.connectionManager = new ConnectionManager(config, {
+      stateChange: (state) => this.setConnectionState(state),
+      message: (data) => this.handleWebSocketMessage(data),
+      error: (error) => this.handleError(error),
+      ready: () => this.handleConnectionReady(),
     });
   }
 
@@ -45,28 +55,26 @@ export class MattermostChannel implements Channel {
    * Start the channel adapter
    * Initializes connection to MatterMost server
    */
-  start(): Promise<void> {
+  async start(): Promise<void> {
     if (this.connectionState !== ConnectionState.DISCONNECTED) {
       this.logger.warn('Channel already starting or started');
-      return Promise.resolve();
+      return;
+    }
+
+    if (!this.connectionManager) {
+      throw new Error('Connection manager not initialized');
     }
 
     this.logger.info('Starting MatterMost channel adapter');
 
     try {
-      this.setConnectionState(ConnectionState.CONNECTING);
+      // Connect to MatterMost
+      await this.connectionManager.connect();
 
-      // TODO: Initialize ConnectionManager
-      // TODO: Establish WebSocket connection
-      // TODO: Subscribe to events
-
-      this.setConnectionState(ConnectionState.CONNECTED);
       this.logger.info('MatterMost channel adapter started successfully');
-      return Promise.resolve();
     } catch (error) {
       this.logger.error({ err: error }, 'Failed to start channel adapter');
-      this.setConnectionState(ConnectionState.FAILED);
-      return Promise.reject(error);
+      throw error;
     }
   }
 
@@ -74,25 +82,24 @@ export class MattermostChannel implements Channel {
    * Stop the channel adapter
    * Closes connection to MatterMost server
    */
-  stop(): Promise<void> {
+  async stop(): Promise<void> {
     if (this.connectionState === ConnectionState.DISCONNECTED) {
       this.logger.warn('Channel already stopped');
-      return Promise.resolve();
+      return;
+    }
+
+    if (!this.connectionManager) {
+      return;
     }
 
     this.logger.info('Stopping MatterMost channel adapter');
 
     try {
-      // TODO: Unsubscribe from events
-      // TODO: Close WebSocket connection
-      // TODO: Cleanup resources
-
-      this.setConnectionState(ConnectionState.DISCONNECTED);
+      await this.connectionManager.disconnect();
       this.logger.info('MatterMost channel adapter stopped successfully');
-      return Promise.resolve();
     } catch (error) {
       this.logger.error({ err: error }, 'Error stopping channel adapter');
-      return Promise.reject(error);
+      throw error;
     }
   }
 
@@ -141,40 +148,35 @@ export class MattermostChannel implements Channel {
     }
   }
 
-  // TODO: Uncomment when implementing message handlers
-  // /**
-  //  * Handle incoming message from MatterMost
-  //  * @param _event Message event
-  //  */
-  // private async handleMessage(_event: unknown): Promise<void> {
-  //   try {
-  //     // TODO: Transform MatterMost message to MoltBot format
-  //     // TODO: Call message handler
-  //
-  //     if (this.eventHandlers.onMessage) {
-  //       // await this.eventHandlers.onMessage(transformedEvent);
-  //     }
-  //   } catch (error) {
-  //     this.logger.error({ err: error }, 'Error handling message');
-  //     if (this.eventHandlers.onError) {
-  //       this.eventHandlers.onError(error as Error);
-  //     }
-  //   }
-  // }
-  //
-  // /**
-  //  * Handle errors
-  //  * @param error Error object
-  //  */
-  // private handleError(error: Error): void {
-  //   this.logger.error({ err: error }, 'Channel error');
-  //
-  //   if (this.eventHandlers.onError) {
-  //     try {
-  //       this.eventHandlers.onError(error);
-  //     } catch (handlerError) {
-  //       this.logger.error({ err: handlerError }, 'Error in error handler');
-  //     }
-  //   }
-  // }
+  /**
+   * Handle WebSocket message
+   */
+  private handleWebSocketMessage(_data: unknown): void {
+    this.logger.debug('Received WebSocket message');
+    // TODO: Transform MatterMost message to MoltBot format
+    // TODO: Call message handler in Phase 2
+  }
+
+  /**
+   * Handle connection ready
+   */
+  private handleConnectionReady(): void {
+    this.logger.info('Connection ready');
+    // TODO: Subscribe to events in Phase 2
+  }
+
+  /**
+   * Handle errors
+   */
+  private handleError(error: Error): void {
+    this.logger.error({ err: error }, 'Channel error');
+
+    if (this.eventHandlers.onError) {
+      try {
+        this.eventHandlers.onError(error);
+      } catch (handlerError) {
+        this.logger.error({ err: handlerError }, 'Error in error handler');
+      }
+    }
+  }
 }
