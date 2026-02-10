@@ -43,6 +43,38 @@ export interface FileAttachment {
 }
 
 /**
+ * Reaction
+ */
+export interface Reaction {
+  /** Emoji name (e.g., 'thumbsup', 'smile') */
+  emoji: string;
+  /** User ID who added the reaction */
+  userId: string;
+  /** Timestamp when reaction was added */
+  timestamp: Date;
+}
+
+/**
+ * Reaction event
+ */
+export interface ReactionEvent {
+  /** Session ID */
+  sessionId: string;
+  /** User who added/removed the reaction */
+  userId: string;
+  /** Post/message ID */
+  postId: string;
+  /** Emoji name */
+  emoji: string;
+  /** Action: 'added' or 'removed' */
+  action: 'added' | 'removed';
+  /** Channel ID */
+  channelId: string;
+  /** Timestamp */
+  timestamp: Date;
+}
+
+/**
  * Message event
  */
 export interface MessageEvent {
@@ -60,6 +92,8 @@ export interface MessageEvent {
   threadId?: string;
   /** Correlation ID for tracking */
   correlationId?: string;
+  /** Reactions on this message */
+  reactions?: Reaction[];
 }
 
 /**
@@ -108,6 +142,9 @@ export interface Channel {
 export interface ChannelEventHandlers {
   /** Called when a message is received */
   onMessage?: (event: MessageEvent) => void | Promise<void>;
+
+  /** Called when a reaction is added or removed */
+  onReaction?: (event: ReactionEvent) => void | Promise<void>;
 
   /** Called when connection state changes */
   onConnectionStateChange?: (state: ConnectionState) => void;

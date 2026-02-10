@@ -1,0 +1,371 @@
+{
+  "vContextInfo": {
+    "version": "0.4"
+  },
+  "todoList": {
+    "items": [
+      {
+        "id": "t3",
+        "title": "Phase 3: Media & Files",
+        "status": "completed",
+        "priority": "high",
+        "narrative": {
+          "Background": "Implement file upload/download support for images, audio, video, and documents",
+          "Scope": "FileHandler for downloads, uploads, attachment handling, media type support",
+          "Dependencies": "Phase 1 & 2 completed",
+          "Completion": "FileHandler implemented with 33 tests passing - download/upload, MIME handling, cleanup"
+        }
+      },
+      {
+        "id": "t3.1",
+        "title": "Create FileHandler skeleton",
+        "status": "completed",
+        "priority": "high",
+        "narrative": {
+          "Parent": "t3",
+          "Details": "Create src/file-handler.ts with class structure, detect file attachments from MatterMost events",
+          "Acceptance": "File metadata extraction works"
+        }
+      },
+      {
+        "id": "t3.2",
+        "title": "Implement file downloads",
+        "status": "completed",
+        "priority": "high",
+        "narrative": {
+          "Parent": "t3",
+          "Dependencies": "t3.1",
+          "Details": "Download files via MatterMost API getFile, stream large files, validate size limits",
+          "Acceptance": "Files download successfully with proper error handling"
+        }
+      },
+      {
+        "id": "t3.3",
+        "title": "Implement file uploads",
+        "status": "completed",
+        "priority": "high",
+        "narrative": {
+          "Parent": "t3",
+          "Dependencies": "t3.2",
+          "Details": "Upload files via uploadFile API, attach to posts, handle multiple attachments",
+          "Acceptance": "Files upload and attach to messages correctly"
+        }
+      },
+      {
+        "id": "t3.4",
+        "title": "Add media type handling",
+        "status": "completed",
+        "priority": "high",
+        "narrative": {
+          "Parent": "t3",
+          "Dependencies": "t3.3",
+          "Details": "Support images (JPEG, PNG, GIF, WebP), audio (MP3, WAV, OGG), video (MP4, WebM), documents (PDF, TXT, MD)",
+          "Acceptance": "All media types handled with proper MIME detection"
+        }
+      },
+      {
+        "id": "t3.5",
+        "title": "Write FileHandler tests",
+        "status": "completed",
+        "priority": "high",
+        "narrative": {
+          "Parent": "t3",
+          "Dependencies": "t3.4",
+          "Details": "Unit tests for metadata extraction, integration tests for upload/download, large file handling",
+          "Acceptance": "All file handler tests pass"
+        }
+      },
+      {
+        "id": "t4",
+        "title": "Phase 4: Rich Interactions",
+        "status": "pending",
+        "priority": "medium",
+        "narrative": {
+          "Background": "Add support for reactions, threads, and presence/status",
+          "Scope": "Reaction add/remove, thread detection and replies, bot presence updates",
+          "Dependencies": "Phase 3 completed"
+        }
+      },
+      {
+        "id": "t4.1",
+        "title": "Implement reactions",
+        "status": "pending",
+        "priority": "medium",
+        "narrative": {
+          "Parent": "t4",
+          "Details": "Listen for reaction_added/removed events, add/remove reactions via API, emoji name mapping",
+          "Acceptance": "Reactions work in both directions"
+        }
+      },
+      {
+        "id": "t4.2",
+        "title": "Implement thread support",
+        "status": "pending",
+        "priority": "medium",
+        "narrative": {
+          "Parent": "t4",
+          "Dependencies": "t4.1",
+          "Details": "Detect thread replies via root_id, map to isolated sessions, send thread replies",
+          "Acceptance": "Thread conversations isolated correctly"
+        }
+      },
+      {
+        "id": "t4.3",
+        "title": "Add presence/status tracking",
+        "status": "pending",
+        "priority": "medium",
+        "narrative": {
+          "Parent": "t4",
+          "Dependencies": "t4.2",
+          "Details": "Set bot status based on Gateway state, monitor user presence events",
+          "Acceptance": "Bot status reflects Gateway state"
+        }
+      },
+      {
+        "id": "t4.4",
+        "title": "Write rich interaction tests",
+        "status": "pending",
+        "priority": "medium",
+        "narrative": {
+          "Parent": "t4",
+          "Dependencies": "t4.3",
+          "Details": "Integration tests for reactions, threads, presence",
+          "Acceptance": "All interaction tests pass"
+        }
+      },
+      {
+        "id": "t5",
+        "title": "Phase 5: Access Control & Security",
+        "status": "completed",
+        "priority": "high",
+        "narrative": {
+          "Background": "Implement access control policies and security hardening",
+          "Scope": "AccessController, DM pairing, allowlists, group policies, token security, rate limiting",
+          "Dependencies": "Phase 4 completed",
+          "Completion": "AccessController with 34 tests - DM pairing, allowFrom patterns, channel policies, input sanitization"
+        }
+      },
+      {
+        "id": "t5.1",
+        "title": "Create AccessController",
+        "status": "completed",
+        "priority": "high",
+        "narrative": {
+          "Parent": "t5",
+          "Details": "src/access-controller.ts with allowFrom checking, user validation",
+          "Acceptance": "Unauthorized users blocked correctly"
+        }
+      },
+      {
+        "id": "t5.2",
+        "title": "Implement DM pairing",
+        "status": "completed",
+        "priority": "high",
+        "narrative": {
+          "Parent": "t5",
+          "Dependencies": "t5.1",
+          "Details": "Pairing code generation, state storage, Gateway approval integration",
+          "Acceptance": "DM pairing flow works end-to-end"
+        }
+      },
+      {
+        "id": "t5.3",
+        "title": "Add group policies",
+        "status": "completed",
+        "priority": "high",
+        "narrative": {
+          "Parent": "t5",
+          "Dependencies": "t5.2",
+          "Details": "Mention gating, allowlist/open policies, requireMention enforcement",
+          "Acceptance": "Group policies enforced"
+        }
+      },
+      {
+        "id": "t5.4",
+        "title": "Security hardening",
+        "status": "completed",
+        "priority": "high",
+        "narrative": {
+          "Parent": "t5",
+          "Dependencies": "t5.3",
+          "Details": "Token redaction in logs, input sanitization, rate limiting",
+          "Acceptance": "Security tests pass, no tokens in logs"
+        }
+      },
+      {
+        "id": "t5.5",
+        "title": "Write access control tests",
+        "status": "completed",
+        "priority": "high",
+        "narrative": {
+          "Parent": "t5",
+          "Dependencies": "t5.4",
+          "Details": "Unit tests for access logic, integration tests for DM pairing and policies",
+          "Acceptance": "All security tests pass"
+        }
+      },
+      {
+        "id": "t6",
+        "title": "Phase 6: Advanced Features",
+        "status": "pending",
+        "priority": "medium",
+        "narrative": {
+          "Background": "Add multi-account support, metadata lookups, and slash commands",
+          "Scope": "Multiple account connections, user/channel caching, slash command routing",
+          "Dependencies": "Phase 5 completed"
+        }
+      },
+      {
+        "id": "t6.1",
+        "title": "Multi-account support",
+        "status": "pending",
+        "priority": "medium",
+        "narrative": {
+          "Parent": "t6",
+          "Details": "Support channels.mattermost.accounts array, per-account ConnectionManager, session routing",
+          "Acceptance": "Multiple accounts connect simultaneously"
+        }
+      },
+      {
+        "id": "t6.2",
+        "title": "Metadata & lookups",
+        "status": "pending",
+        "priority": "medium",
+        "narrative": {
+          "Parent": "t6",
+          "Dependencies": "t6.1",
+          "Details": "User/channel ID lookups with caching, team/channel management operations",
+          "Acceptance": "Lookups fast and accurate with cache"
+        }
+      },
+      {
+        "id": "t6.3",
+        "title": "Slash commands",
+        "status": "pending",
+        "priority": "medium",
+        "narrative": {
+          "Parent": "t6",
+          "Dependencies": "t6.2",
+          "Details": "Detect slash commands, parse arguments, route to Gateway",
+          "Acceptance": "Slash commands work like DMs"
+        }
+      },
+      {
+        "id": "t6.4",
+        "title": "Write advanced feature tests",
+        "status": "pending",
+        "priority": "medium",
+        "narrative": {
+          "Parent": "t6",
+          "Dependencies": "t6.3",
+          "Details": "Integration tests for multi-account, lookups, commands",
+          "Acceptance": "All advanced feature tests pass"
+        }
+      },
+      {
+        "id": "t7",
+        "title": "Phase 7: Documentation",
+        "status": "completed",
+        "priority": "medium",
+        "narrative": {
+          "Background": "Create comprehensive documentation for users and developers",
+          "Scope": "Example configs, installation guide, API docs, architecture docs, troubleshooting",
+          "Dependencies": "Phase 6 completed"
+        }
+      },
+      {
+        "id": "t7.1",
+        "title": "Create example configs",
+        "status": "completed",
+        "priority": "medium",
+        "narrative": {
+          "Parent": "t7",
+          "Details": "examples/ directory with basic, multi-account, and security-hardened configs",
+          "Acceptance": "Examples are copy-paste ready"
+        }
+      },
+      {
+        "id": "t7.2",
+        "title": "Write user documentation",
+        "status": "completed",
+        "priority": "medium",
+        "narrative": {
+          "Parent": "t7",
+          "Dependencies": "t7.1",
+          "Details": "Installation guide, configuration reference with all options and defaults",
+          "Acceptance": "New users can setup from docs"
+        }
+      },
+      {
+        "id": "t7.3",
+        "title": "Write developer documentation",
+        "status": "completed",
+        "priority": "medium",
+        "narrative": {
+          "Parent": "t7",
+          "Dependencies": "t7.2",
+          "Details": "Architecture docs with diagrams, contributing guide, troubleshooting",
+          "Acceptance": "Developers understand codebase structure"
+        }
+      },
+      {
+        "id": "t8",
+        "title": "Phase 8: Release Preparation",
+        "status": "completed",
+        "priority": "high",
+        "narrative": {
+          "Background": "Prepare package for NPM release with CI/CD",
+          "Scope": "Package configuration, versioning, changelog, GitHub Actions, release process",
+          "Dependencies": "Phase 7 completed"
+        }
+      },
+      {
+        "id": "t8.1",
+        "title": "NPM package configuration",
+        "status": "completed",
+        "priority": "high",
+        "narrative": {
+          "Parent": "t8",
+          "Details": "Finalize package.json, configure .npmignore, test with npm link",
+          "Acceptance": "Package installs correctly"
+        }
+      },
+      {
+        "id": "t8.2",
+        "title": "Create CHANGELOG",
+        "status": "completed",
+        "priority": "high",
+        "narrative": {
+          "Parent": "t8",
+          "Dependencies": "t8.1",
+          "Details": "Set version to 1.0.0, document all features in CHANGELOG.md",
+          "Acceptance": "Changelog complete with all features"
+        }
+      },
+      {
+        "id": "t8.3",
+        "title": "Setup CI/CD",
+        "status": "pending",
+        "priority": "high",
+        "narrative": {
+          "Parent": "t8",
+          "Dependencies": "t8.2",
+          "Details": "GitHub Actions for test, lint, build, and release workflows",
+          "Acceptance": "CI passes on main branch"
+        }
+      },
+      {
+        "id": "t8.4",
+        "title": "Release process",
+        "status": "pending",
+        "priority": "high",
+        "narrative": {
+          "Parent": "t8",
+          "Dependencies": "t8.3",
+          "Details": "Document release steps, dry-run publish, create GitHub release",
+          "Acceptance": "Ready for v1.0.0 release"
+        }
+      }
+    ]
+  }
+}

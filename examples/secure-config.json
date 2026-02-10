@@ -1,0 +1,40 @@
+{
+  "channels": {
+    "mattermost": {
+      "enabled": true,
+      "url": "https://mattermost.example.com",
+      "token": "your-bot-access-token-here",
+      "dm": {
+        "policy": "pairing"
+      },
+      "allowFrom": [
+        "*@company.com",
+        "admin-user-id",
+        "trusted-user-id"
+      ],
+      "groupPolicy": "allowlist",
+      "teams": {
+        "team-id-abc123": {
+          "channels": {
+            "general": {
+              "allow": true,
+              "requireMention": true
+            },
+            "ai-support": {
+              "allow": true,
+              "requireMention": false
+            }
+          }
+        }
+      },
+      "retry": {
+        "initialDelay": 1000,
+        "maxDelay": 60000,
+        "multiplier": 2,
+        "jitter": true,
+        "maxAttempts": 5
+      },
+      "logLevel": "info"
+    }
+  }
+}

@@ -1,0 +1,41 @@
+# Source files
+src/
+test/
+*.ts
+!*.d.ts
+
+# Config files
+.eslintrc.js
+.prettierrc
+tsconfig.json
+jest.config.js
+.nodemonrc.json
+
+# Git
+.git/
+.gitignore
+
+# CI/CD
+.github/
+
+# Documentation (keep only README and CHANGELOG in package)
+docs/
+examples/
+SPECIFICATION.md
+CONTRIBUTING.md
+
+# Development
+node_modules/
+coverage/
+.vscode/
+.idea/
+*.log
+.DS_Store
+
+# VContext
+vcontext/
+
+# Temporary files
+*.tmp
+*.swp
+*~

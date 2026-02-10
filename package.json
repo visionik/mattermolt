@@ -1,6 +1,6 @@
 {
   "name": "moltbot-mattermost",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "MatterMost channel adapter for MoltBot Gateway",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

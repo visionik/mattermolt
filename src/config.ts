@@ -58,12 +58,16 @@ export interface MattermostConfig {
   dm?: DmPolicyConfig;
   /** List of allowed user IDs or email patterns */
   allowFrom?: string[];
+  /** Group/channel access policy: 'allowlist' requires explicit config, 'open' allows all */
+  groupPolicy?: 'allowlist' | 'open';
   /** Map of team IDs to team configurations */
   teams?: Record<string, TeamConfig>;
   /** Retry configuration for connection management */
   retry?: RetryConfig;
   /** Log level for the adapter */
   logLevel?: 'debug' | 'info' | 'warn' | 'error';
+  /** Whether to send typing indicators (default: true) */
+  typingIndicators?: boolean;
 }
 
 /**
@@ -84,6 +88,7 @@ export const DEFAULT_CONFIG: Partial<MattermostConfig> = {
   dm: {
     policy: 'pairing',
   },
+  groupPolicy: 'allowlist',
   retry: {
     initialDelay: 1000,
     maxDelay: 60000,
@@ -92,6 +97,7 @@ export const DEFAULT_CONFIG: Partial<MattermostConfig> = {
     jitter: true,
   },
   logLevel: 'info',
+  typingIndicators: true,
 };
 
 /**
@@ -178,6 +184,10 @@ export function validateConfig(config: unknown): MattermostConfig {
 
   if (cfg.logLevel && !['debug', 'info', 'warn', 'error'].includes(cfg.logLevel)) {
     throw new ConfigValidationError("logLevel must be 'debug', 'info', 'warn', or 'error'");
+  }
+
+  if (cfg.typingIndicators !== undefined && typeof cfg.typingIndicators !== 'boolean') {
+    throw new ConfigValidationError('typingIndicators must be a boolean');
   }
 
   // Return validated config with defaults

@@ -6,16 +6,31 @@ MatterMolt is a native MoltBot channel adapter that connects MatterMost to the M
 
 ## Features
 
+### Core Messaging
 - 🔌 Real-time MatterMost integration via Bot API and WebSocket
 - 💬 Text message send/receive in DMs and channels
 - 📎 File upload/download (images, audio, video, documents)
-- 🔒 Standard MoltBot access control (DM pairing, allowlists, group policies)
-- 🧵 Threaded conversations support
-- 👍 Message reactions (emoji responses)
-- ✏️ Message editing and deletion
-- ⌨️ Typing indicators
-- 🟢 Presence/status updates
+- ✏️ Message editing and deletion (inbound & outbound)
+- ⌨️ Typing indicators via WebSocket
 - 🔄 Auto-reconnect with exponential backoff
+- 🚦 Rate limiting with message queue (429 detection)
+
+### Rich Interactions
+- 👍 Reactions: Add/remove emoji reactions
+- 🧵 Thread support with context tracking
+- 🟢 Presence/status: Bot status updates and user tracking
+- ⚡ Slash command detection
+
+### Security & Access Control
+- 🔒 DM pairing with 6-character codes
+- ✅ Pattern-based allowlists (wildcards supported)
+- 🚪 Channel access control with mention gating
+- 🛡️ Input sanitization and validation
+
+### Advanced Features
+- 💾 Metadata caching (users, channels, teams)
+- 📊 Comprehensive statistics and monitoring
+- 🔍 Team and channel discovery APIs
 
 ## Installation
 
@@ -152,10 +167,15 @@ MatterMolt consists of several key components:
 
 - **MattermostChannel**: Main adapter class that extends MoltBot's Channel base
 - **ConnectionManager**: Handles WebSocket connection, authentication, and reconnection
-- **MessageHandler**: Transforms messages between MatterMost and MoltBot formats
+- **MessageHandler**: Transforms messages between MatterMost and MoltBot formats with rate limiting
 - **FileHandler**: Manages file upload/download operations
 - **SessionMapper**: Maps MatterMost conversations to MoltBot sessions
 - **AccessController**: Enforces access control policies
+- **ReactionHandler**: Manages emoji reactions on messages
+- **PresenceHandler**: Tracks bot and user presence/status
+- **ThreadContextManager**: Maintains thread participant and context tracking
+- **MetadataCache**: Caches user, channel, and team information (1-hour TTL)
+- **RateLimiter**: Token bucket rate limiter with message queue
 
 ## Session Mapping
 

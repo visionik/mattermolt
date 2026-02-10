@@ -5,6 +5,7 @@
 import type { Client4 } from '@mattermost/client';
 import { Logger } from './logger.js';
 import { SessionMapper } from './session-mapper.js';
+import { RateLimiter } from './rate-limiter.js';
 import type { MessageEvent, MessageContent } from './types.js';
 
 /**
@@ -51,11 +52,15 @@ export class MessageHandler {
   private logger: Logger;
   private sessionMapper: SessionMapper;
   private client: Client4;
+  private connectionManager?: any; // ConnectionManager reference for WebSocket operations
   private botUserId?: string;
+  private rateLimiter: RateLimiter;
 
-  constructor(client: Client4, agentId = 'main') {
+  constructor(client: Client4, agentId = 'main', connectionManager?: any) {
     this.client = client;
     this.sessionMapper = new SessionMapper(agentId);
+    this.connectionManager = connectionManager;
+    this.rateLimiter = new RateLimiter(10, 20); // 10 req/sec, burst of 20
     this.logger = new Logger({
       component: 'message-handler',
     });
@@ -94,10 +99,16 @@ export class MessageHandler {
         return Promise.resolve(null);
       }
 
-      // Ignore system messages
-      if (post.type && post.type !== '') {
+      // Ignore system messages (but allow slash commands)
+      if (post.type && post.type !== '' && post.type !== 'me') {
         this.logger.debug({ postId: post.id, type: post.type }, 'Ignoring system message');
         return Promise.resolve(null);
+      }
+
+      // Detect slash commands (messages starting with /)
+      const isSlashCommand = post.message.trim().startsWith('/');
+      if (isSlashCommand) {
+        this.logger.debug({ postId: post.id, message: post.message }, 'Detected slash command');
       }
 
       // Get channel type
@@ -191,7 +202,8 @@ export class MessageHandler {
           file_ids: isLastChunk && content.files ? [] : undefined,
         };
 
-        await this.client.createPost(post);
+        // Use rate limiter for API calls
+        await this.rateLimiter.execute(() => this.client.createPost(post));
         this.logger.debug(
           { channelId, rootId, chunk: i + 1, total: chunks.length },
           'Sent message chunk'
@@ -207,8 +219,10 @@ export class MessageHandler {
 
   /**
    * Send typing indicator
+   * @param sessionId The session ID to send typing indicator for
+   * @param parentId Optional parent post ID for threads
    */
-  async sendTypingIndicator(sessionId: string): Promise<void> {
+  async sendTypingIndicator(sessionId: string, parentId?: string): Promise<void> {
     try {
       let channelId: string | null = null;
 
@@ -222,13 +236,20 @@ export class MessageHandler {
         }
       }
 
-      if (channelId) {
-        // MatterMost typing indicator would typically be sent via WebSocket
-        // For now, we'll just log it
-        this.logger.debug({ sessionId, channelId }, 'Typing indicator requested');
+      if (channelId && this.connectionManager) {
+        // Send typing indicator via WebSocket
+        // MatterMost expects a 'user_typing' action
+        this.connectionManager.sendWebSocketAction('user_typing', {
+          channel_id: channelId,
+          parent_id: parentId,
+        });
+        this.logger.debug({ sessionId, channelId, parentId }, 'Typing indicator sent');
+      } else if (!this.connectionManager) {
+        this.logger.debug('Cannot send typing indicator: ConnectionManager not available');
       }
     } catch (error) {
-      this.logger.error({ err: error, sessionId }, 'Failed to send typing indicator');
+      // Typing indicators are non-critical, just log the error
+      this.logger.debug({ err: error, sessionId }, 'Failed to send typing indicator');
     }
   }
 

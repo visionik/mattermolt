@@ -25,7 +25,17 @@ export type {
   MessageContent,
   FileAttachment,
   SendMessageOptions,
+  Reaction,
+  ReactionEvent,
 } from './types.js';
+export type { UserStatus, PresenceEvent } from './presence-handler.js';
+export type { UserMetadata, ChannelMetadata, TeamMetadata } from './metadata-cache.js';
+export type { ThreadContext } from './thread-context.js';
+export { ReactionHandler } from './reaction-handler.js';
+export { PresenceHandler } from './presence-handler.js';
+export { MetadataCache } from './metadata-cache.js';
+export { ThreadContextManager } from './thread-context.js';
+export { RateLimiter } from './rate-limiter.js';
 
 /**
  * Creates and configures a MatterMost channel adapter

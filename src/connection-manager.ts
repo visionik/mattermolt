@@ -66,6 +66,38 @@ export class ConnectionManager {
   }
 
   /**
+   * Get WebSocket instance (for advanced operations)
+   */
+  get webSocket(): WebSocket | null {
+    return this.ws;
+  }
+
+  /**
+   * Send a WebSocket action
+   * @param action The action to send
+   * @param data Data for the action
+   */
+  sendWebSocketAction(action: string, data: Record<string, unknown>): void {
+    if (!this.ws || this.state !== ConnectionState.CONNECTED) {
+      this.logger.debug({ action }, 'Cannot send WebSocket action: not connected');
+      return;
+    }
+
+    const message = {
+      action,
+      seq: Date.now(),
+      data,
+    };
+
+    try {
+      this.ws.send(JSON.stringify(message));
+      this.logger.debug({ action }, 'Sent WebSocket action');
+    } catch (error) {
+      this.logger.error({ err: error, action }, 'Failed to send WebSocket action');
+    }
+  }
+
+  /**
    * Connect to MatterMost server
    */
   async connect(): Promise<void> {
