@@ -163,7 +163,40 @@ npm run typecheck
 
 ## Architecture
 
-MatterMolt consists of several key components:
+### Component Overview
+
+```mermaid
+%%{init: {'theme':'base', 'themeVariables': { 'primaryColor':'#909090', 'primaryTextColor':'#000', 'primaryBorderColor':'#404040', 'lineColor':'#404040', 'secondaryColor':'#808080', 'tertiaryColor':'#707070', 'noteTextColor':'#000', 'noteBkgColor':'#909090'}}}%%
+graph TB
+    MM[MatterMost Server] -->|WebSocket + REST| CM[ConnectionManager]
+    CM --> MC[MattermostChannel<br/>Main Adapter]
+    
+    MC --> MH[MessageHandler<br/>w/ RateLimiter]
+    MC --> RH[ReactionHandler]
+    MC --> PH[PresenceHandler]
+    MC --> FH[FileHandler]
+    MC --> AC[AccessController]
+    MC --> SM[SessionMapper]
+    MC --> TC[ThreadContextManager]
+    MC --> MDC[MetadataCache]
+    
+    MC -->|Events| GW[MoltBot Gateway]
+    
+    style MM fill:#707070,stroke:#000,color:#000
+    style MC fill:#909090,stroke:#000,color:#000
+    style GW fill:#707070,stroke:#000,color:#000
+    style MH fill:#808080,stroke:#000,color:#000
+    style RH fill:#808080,stroke:#000,color:#000
+    style PH fill:#808080,stroke:#000,color:#000
+    style FH fill:#808080,stroke:#000,color:#000
+    style AC fill:#808080,stroke:#000,color:#000
+    style SM fill:#808080,stroke:#000,color:#000
+    style TC fill:#808080,stroke:#000,color:#000
+    style MDC fill:#808080,stroke:#000,color:#000
+    style CM fill:#808080,stroke:#000,color:#000
+```
+
+### Components
 
 - **MattermostChannel**: Main adapter class that extends MoltBot's Channel base
 - **ConnectionManager**: Handles WebSocket connection, authentication, and reconnection
@@ -177,8 +210,82 @@ MatterMolt consists of several key components:
 - **MetadataCache**: Caches user, channel, and team information (1-hour TTL)
 - **RateLimiter**: Token bucket rate limiter with message queue
 
+## Message Flow
+
+### Inbound Message Processing
+
+```mermaid
+%%{init: {'theme':'base', 'themeVariables': { 'primaryColor':'#909090', 'primaryTextColor':'#000', 'primaryBorderColor':'#404040', 'lineColor':'#404040', 'secondaryColor':'#808080', 'tertiaryColor':'#707070', 'actorTextColor':'#000', 'actorBkg':'#808080', 'actorLineColor':'#404040', 'signalColor':'#404040', 'noteBkgColor':'#909090', 'noteTextColor':'#000'}}}%%
+sequenceDiagram
+    participant MM as MatterMost
+    participant CM as ConnectionManager
+    participant MC as MattermostChannel
+    participant MH as MessageHandler
+    participant AC as AccessController
+    participant SM as SessionMapper
+    participant GW as Gateway
+    
+    MM->>CM: WebSocket Event (posted)
+    CM->>MC: handleWebSocketMessage()
+    MC->>MH: transformInboundMessage()
+    MH->>MC: MessageEvent
+    MC->>AC: checkAccess()
+    AC->>MC: AccessDecision
+    alt Access Denied
+        MC->>MM: Send Pairing Code
+    else Access Granted
+        MC->>AC: validateMessage()
+        MC->>AC: sanitizeInput()
+        MC->>SM: mapToSession()
+        SM->>MC: sessionId
+        MC->>GW: onMessage(event)
+    end
+```
+
+### Outbound Message Processing
+
+```mermaid
+%%{init: {'theme':'base', 'themeVariables': { 'primaryColor':'#909090', 'primaryTextColor':'#000', 'primaryBorderColor':'#404040', 'lineColor':'#404040', 'secondaryColor':'#808080', 'tertiaryColor':'#707070', 'actorTextColor':'#000', 'actorBkg':'#808080', 'actorLineColor':'#404040', 'signalColor':'#404040', 'noteBkgColor':'#909090', 'noteTextColor':'#000'}}}%%
+sequenceDiagram
+    participant GW as Gateway
+    participant MC as MattermostChannel
+    participant MH as MessageHandler
+    participant RL as RateLimiter
+    participant CM as ConnectionManager
+    participant MM as MatterMost
+    
+    GW->>MC: send(options)
+    MC->>CM: sendTypingIndicator()
+    CM->>MM: WebSocket (user_typing)
+    MC->>MH: sendMessage()
+    MH->>MH: chunkMessage()
+    loop For each chunk
+        MH->>RL: execute(createPost)
+        RL->>MM: REST API (createPost)
+        MM->>RL: Response
+    end
+    MH->>MC: Success
+```
+
 ## Session Mapping
 
+```mermaid
+%%{init: {'theme':'base', 'themeVariables': { 'primaryColor':'#909090', 'primaryTextColor':'#000', 'primaryBorderColor':'#404040', 'lineColor':'#404040', 'secondaryColor':'#808080', 'tertiaryColor':'#707070', 'noteTextColor':'#000', 'noteBkgColor':'#909090', 'stateLabelColor':'#000', 'compositeBackground':'#a0a0a0'}}}%%
+stateDiagram-v2
+    [*] --> DM: Direct Message
+    [*] --> Channel: Channel Message
+    [*] --> Thread: Thread Reply
+    
+    DM --> agent:main:main
+    Channel --> agent:main:mattermost:channel:ID
+    Thread --> agent:main:mattermost:thread:ID
+    
+    agent:main:main --> [*]
+    agent:main:mattermost:channel:ID --> [*]
+    agent:main:mattermost:thread:ID --> [*]
+```
+
+**Session Formats:**
 - **DMs**: `agent:main:main`
 - **Channels**: `agent:main:mattermost:channel:<channelId>`
 - **Threads**: `agent:main:mattermost:thread:<threadId>`
@@ -190,6 +297,77 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) for development guidelines.
 ## License
 
 MIT - See [LICENSE](./LICENSE) for details.
+
+## Security Flow
+
+### DM Pairing Process
+
+```mermaid
+%%{init: {'theme':'base', 'themeVariables': { 'primaryColor':'#909090', 'primaryTextColor':'#000', 'primaryBorderColor':'#404040', 'lineColor':'#404040', 'secondaryColor':'#808080', 'tertiaryColor':'#707070', 'actorTextColor':'#000', 'actorBkg':'#808080', 'actorLineColor':'#404040', 'signalColor':'#404040', 'noteBkgColor':'#909090', 'noteTextColor':'#000'}}}%%
+sequenceDiagram
+    participant U as User
+    participant MM as MatterMost
+    participant MC as MattermostChannel
+    participant AC as AccessController
+    participant A as Admin
+    
+    U->>MM: Send DM to Bot
+    MM->>MC: Message Event
+    MC->>AC: checkAccess(userId)
+    AC->>AC: Generate 6-char code
+    AC->>MC: requiresPairing + code
+    MC->>MM: "Pairing code: ABC123"
+    MM->>U: Show pairing message
+    
+    Note over A: Admin receives pairing request
+    A->>MC: approvePairing("ABC123")
+    MC->>AC: approvePairing()
+    AC->>AC: Add to pairedUsers
+    
+    U->>MM: Send another message
+    MM->>MC: Message Event
+    MC->>AC: checkAccess(userId)
+    AC->>MC: Allowed ✓
+    MC->>MM: Bot response
+```
+
+## Rate Limiting
+
+### Token Bucket Algorithm
+
+```mermaid
+%%{init: {'theme':'base', 'themeVariables': { 'primaryColor':'#909090', 'primaryTextColor':'#000', 'primaryBorderColor':'#404040', 'lineColor':'#404040', 'secondaryColor':'#808080', 'tertiaryColor':'#707070', 'noteTextColor':'#000', 'noteBkgColor':'#909090', 'stateLabelColor':'#000', 'compositeBackground':'#a0a0a0'}}}%%
+stateDiagram-v2
+    [*] --> CheckTokens: API Request
+    
+    CheckTokens --> HasTokens: tokens ≥ 1
+    CheckTokens --> NoTokens: tokens < 1
+    
+    HasTokens --> ConsumeToken: tokens - 1
+    ConsumeToken --> ExecuteRequest
+    ExecuteRequest --> CheckError
+    
+    CheckError --> Success: 200 OK
+    CheckError --> RateLimited: 429 Error
+    
+    RateLimited --> QueueRequest: Requeue
+    QueueRequest --> Wait: Sleep 1s
+    Wait --> CheckTokens
+    
+    NoTokens --> Wait: Sleep until refill
+    
+    Success --> [*]
+    
+    note right of CheckTokens
+        Bucket: 20 tokens max
+        Refill: 10 tokens/sec
+    end note
+```
+
+**Configuration:**
+- **Rate**: 10 requests/second
+- **Burst**: 20 requests
+- **429 Handling**: Automatic retry with 1s delay
 
 ## Support
 
