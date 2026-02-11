@@ -1,0 +1,14 @@
+{
+  "channels": {
+    "mattermost": {
+      "enabled": true,
+      "url": "https://mattermost.example.com",
+      "token": "your-bot-access-token-here",
+      "dm": {
+        "policy": "open"
+      },
+      "groupPolicy": "open",
+      "logLevel": "info"
+    }
+  }
+}

@@ -1,0 +1,56 @@
+/**
+ * MatterMolt - MatterMost channel adapter for MoltBot Gateway
+ * @module mattermolt
+ */
+
+export { MattermostChannel } from './mattermost-channel.js';
+export { ConnectionManager } from './connection-manager.js';
+export { MessageHandler } from './message-handler.js';
+export { SessionMapper } from './session-mapper.js';
+export { validateConfig, ConfigValidationError, DEFAULT_CONFIG } from './config.js';
+export { Logger, createLogger } from './logger.js';
+export type {
+  MattermostConfig,
+  DmPolicyConfig,
+  ChannelConfig,
+  TeamConfig,
+  RetryConfig,
+} from './config.js';
+export type { LoggerOptions } from './logger.js';
+export type {
+  Channel,
+  ChannelEventHandlers,
+  ConnectionState,
+  MessageEvent,
+  MessageContent,
+  FileAttachment,
+  SendMessageOptions,
+  Reaction,
+  ReactionEvent,
+} from './types.js';
+export type { UserStatus, PresenceEvent } from './presence-handler.js';
+export type { UserMetadata, ChannelMetadata, TeamMetadata } from './metadata-cache.js';
+export type { ThreadContext } from './thread-context.js';
+export { ReactionHandler } from './reaction-handler.js';
+export { PresenceHandler } from './presence-handler.js';
+export { MetadataCache } from './metadata-cache.js';
+export { ThreadContextManager } from './thread-context.js';
+export { RateLimiter } from './rate-limiter.js';
+
+/**
+ * Creates and configures a MatterMost channel adapter
+ * @param config MatterMost configuration
+ * @param eventHandlers Event handlers for the channel
+ * @returns Configured MatterMost channel instance
+ */
+import { validateConfig as _validateConfig } from './config.js';
+import { MattermostChannel as _MattermostChannel } from './mattermost-channel.js';
+import type { ChannelEventHandlers } from './types.js';
+
+export function createMattermostChannel(
+  config: unknown,
+  eventHandlers?: ChannelEventHandlers
+): _MattermostChannel {
+  const validatedConfig = _validateConfig(config);
+  return new _MattermostChannel(validatedConfig, eventHandlers);
+}
